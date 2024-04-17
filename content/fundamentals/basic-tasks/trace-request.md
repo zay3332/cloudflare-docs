@@ -72,7 +72,7 @@ Use the [Request Trace](/api/operations/account-request-tracer-request-trace) op
 
 For matched configurations in trace results, each step corresponds to one of the following:
 
-* Execution of one or more rules of a Cloudflare product, in the context of a [phase](/ruleset-engine/about/phases/) (for products built on the [Ruleset Engine](/ruleset-engine/))
+* Execution of one or more rules of Cloudflare products built on the [Ruleset Engine](/ruleset-engine/). Refer to the Ruleset Engine's [Phases list](/ruleset-engine/reference/phases-list/) for a list of such products.
 * [Page Rules](/rules/page-rules/) (execution of one or more rules)
 * [Workers](/workers/) (execution of one or more scripts)
 
@@ -80,12 +80,12 @@ For matched configurations in trace results, each step corresponds to one of the
 
 ## Limitations
 
-Currently, you cannot perform traces for:
+Trace results may not be accurate for:
 
 * [Spectrum](/spectrum/) applications
 * Hostnames using [Data Localization Suite](/data-localization/)
 
-Also, the following products will not appear in trace results:
+Additionally, the following products will not appear in trace results:
 
 * [Firewall rules](/firewall/)
 * [WAF managed rules (previous version)](/waf/reference/legacy/old-waf-managed-rules/)
