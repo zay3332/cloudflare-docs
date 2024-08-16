@@ -1,0 +1,24 @@
+---
+pcx_content_type: concept
+title: Limits
+sidebar:
+  order: 2
+
+---
+
+import { Render } from "~/components"
+
+| Feature                   | Limit                                                                  |
+| ------------------------- | ---------------------------------------------------------------------- |
+| Workflow class definitions per script | 5 (per script) |
+| Total scripts per account | 500 (shared with Worker script limits) |
+| Compute time per Workflow | "same as Workers" |
+| Maximum state that can be persisted per Workflow run | 1GB |
+| Maximum persisted state per step | 1MB (1e6 bytes) | 
+| Maximum `step.sleep` duration | 365 days (1 year) <sup>beta</beta> |
+| Maximum steps per Workflow | 256 <sup>beta</beta> |
+| Retention limit for completed Workflow state | 30 days <sup>beta</beta> |
+
+<sup>beta</beta> This limit will be reviewed and revised during the open beta for Workflows.
+
+<Render file="limits_increase" product="workers" />

@@ -1,0 +1,241 @@
+---
+title: Get started
+pcx_content_type: get-started
+updated: 2038-01-19
+sidebar:
+  order: 2
+
+---
+
+import { Render, PackageManagers } from "~/components"
+
+:::note
+
+Workflows is in **public beta**, and any developer with a [free or paid Workers plan](/workers/platform/pricing/#workers) can start using Workflows immediately.
+
+To learn more about Workflows, read [the beta announcement blog](https://blog.cloudflare.com/THE-BLOG-SLUG-WILL-GO-HERE) and the [How Workflows Works](/workflows/build/how-workflows-works/) developer documentation.
+
+:::
+
+Workflows allow you to build durable, multi-step applications using the Workers platform. A Workflow can automatically retry, persist state, run for hours or days, and coordinate between third-party APIs.
+
+This guide will instruct you through:
+
+* Defining your first Workflow and publishing it
+* Deploying the Workflow to your Cloudflare account
+* Running (triggering) your Workflow and observing its output
+
+At the end of this guide, you should be able to author, deploy and debug your own Workflows applications.
+
+## Prerequisites
+
+To continue:
+
+1. Sign up for a [Cloudflare account](https://dash.cloudflare.com/sign-up/workers-and-pages) if you have not already.
+2. Install [`npm`](https://docs.npmjs.com/getting-started).
+3. Install [`Node.js`](https://nodejs.org/en/). Use a Node version manager like [Volta](https://volta.sh/) or [nvm](https://github.com/nvm-sh/nvm) to avoid permission issues and change Node.js versions. [Wrangler](/workers/wrangler/install-and-update/) requires a Node version of `16.17.0` or later.
+
+## 1. Define your Workflow
+
+To create your first Workflow, use the `create cloudflare` (C3) CLI tool and pass it the Workflows starter template:
+
+<PackageManagers type="create" pkg="cloudflare@latest" args={'my-first-workflow'} />
+
+<Render file="c3-post-run-steps" product="workers" params={{ one: "Hello World example", two: "Hello World Worker", three: "TypeScript" }} />
+
+This will download the template, with two key files: `src/index.ts` (where your Workflow code will live) and `wrangler.toml` (configuration).
+
+Open the `src/index.ts` file in your text editor. This file contains the following code, which is the most basic instance of a Workflow definition.
+
+```ts
+---
+filename: src/index.ts
+---
+// Import the Workflow definition
+import { Workflow } from "cloudflare:workflows"
+
+// Create your own class that implements a Workflow
+export class MyFirstWorkflow implements Workflow {
+    async run(step: WorkflowStep) {
+        // One or more steps here.
+    }
+}
+```
+
+A Workflow definition:
+
+1. Defines a `run` method that contains the primary logic for your workflow.
+2. Has at least one or more calls to `step.run` that encapsulates the logic of your Workflow.
+3. Can define an optional `onFailure` method that is run when the Workflow fails and exhausts any retry configuration.
+
+A single Worker application can contain multiple Workflow definitions, as long as each Workflow has a unique class name. This can be useful for code re-use or to define Workflows are related to each other conceptually.
+
+Each Workflow is otherwise entirely independent: a Worker that defines multiple Workflows is no different from a set of Workers that define one Workflow each.
+
+## 2. Create your Workflows steps
+
+Each `step` in a Workflow is an independently retriable function.
+
+A `step` is what makes a Workflow powerful, as you can encapsulate errors and persist state as your Workflow progresses from step to step, avoiding your application from having to start from scratch on failure and ultimately build more reliable applications. 
+
+* A step can execute code (`step.do`) or sleep a Workflow (`step.sleep`)
+* If a step fails (throws an exception), it will be automatically be retried based on your retry logic.
+* Ia step succeeds, any state it returns will be persisted within the Workflow.
+
+At it's most basic, a step looks like this:
+
+```ts
+import { Workflow } from "cloudflare:workflows"
+
+export class MyFirstWorkflow extends Workflows {
+    async run(event: WorkflowEvents, step: WorkflowStep) {
+        let config = await step.do("fetch config", () => {
+
+        })
+    }
+}
+
+```
+
+Each call to `step.do` accepts three arguments:
+
+1. (Required) A step name, which identifies the step in logs and telemetry
+2. (Required) A callback function that contains the code to run for your step, and any state you want the Workflow to persist
+3. (Optional) A `StepConfig` that defines the retry configuration (max retries, delay, and backoff algorithm) for the step.
+
+When trying to decide whether to break code up into more than one step, a good rule of thumb is to ask "do I want _all_ of this code to run again if just one part of it fails?". In many cases, you do _not_ want to repeatedly call an API if the following data processing stage fails, or if you get an error when attempting to send a completion or welcome email.
+
+For example, each of the below tasks is ideally encapsulated in its own step, so that any failure — such as a file not existing, a third-party API being down or rate limited — does not cause your entire program to fail.
+
+* Reading or writing files from R2
+* Running an AI task using [Workers AI](/workers-ai)
+* Querying a D1 database or a database via [Hyperdrive](/hyperdrive/)
+* Calling a third-party API
+
+If a subsequent step fails, your Workflow can retry from that step, using any state returned from a previous step. This can also help you avoid unnecessarily querying a database or calling an paid API repeatedly for data you've already fetched.
+
+{{<Aside type="note">}}
+
+The term "Durable Execution" is widely used to describe this programming model.
+
+"Durable" describes the ability of the program (application) to implicitly persist state without you having to write to an external store or serialize program state manual
+
+{{</Aside>}}
+
+Return to the `src/index.ts` file we created in the previous step, and add two calls to `step.do` (or replace the contents of the file with the code below):
+
+```ts
+---
+filename: src/index.ts
+---
+
+import { Workflow } from "cloudflare:workflows"
+
+export class MyFirstWorkflow extends Workflows {
+    async run(event: WorkflowEvents, step: WorkflowStep) {
+        // Add this step
+        let config = await step.do("setup", () => {
+
+        })
+
+        await step.sleep("1 minute")
+        
+        // ... and your second step:
+        let fileData = await step.do("read files", () => {
+
+        })
+    }
+}
+```
+
+TODO - talk about StepConfig briefly? How retries work?
+
+## 3. Trigger a Workflow
+
+To trigger a Workflow...
+
+A Workflow can be triggered by any of:
+
+1. External HTTP requests
+2. Messages from a [Queue](/queues/)
+3. A schedule via [Cron Trigger]()
+
+TODO - intro this code
+
+
+```toml
+---
+filename: wrangler.toml
+---
+
+
+[[workflows]]
+name = "MY_WORKFLOW" # A valid JavaScript variable name
+class = "MyFirstWorkflow" # The name of your Workflow definition
+
+```
+
+In your `src/index.ts` file...
+
+```ts
+---
+filename: src/index.ts
+---
+interface Env {
+    MY_WORKFLOW: Workflow;
+}
+
+export default {
+    async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+        const result = env.MY_WORKFLOW.run()
+        return Response.json(result)
+    }
+}
+```
+
+## 4. Deploy your Workflow
+
+Deploying a Workflow is identical to deploying a Worker. 
+
+```sh
+$ npx wrangler deploy
+```
+
+
+## 5. Run and observe your Workflow
+
+With your Workflow deployed, you can now run it.
+
+1. A Workflow can run in parallel: each unique invocation of a Workflow is an _instance_ of that Workflow.
+2. An instance will run to completion (success or failure)
+3. Deploying newer versions of a Workflow will cause all instances after that point to run the newest Workflow code.
+
+{{<Aside type="note">}}
+
+Because Workflows can be long running, it's possible to have running instances that represent different versions of your Workflow code over time.
+
+{{</Aside>}}
+
+To trigger a Workflow, you can use the `wrangler` CLI and pass in an optional `--payload`. The `payload` will be passed to your Workflow's `run` method handler as an `Event`
+
+```sh
+$ npx wrangler workflows run your-workflow --payload='{}'
+# Example output
+# Running Workflow ...
+# Workflow instance created! 
+# Instance ID: 12345-abcdef-98765-fedcba
+```
+
+## 6. (Optional) Clean up
+
+TODO - delete the Workflow.
+
+---
+
+## Next steps
+
+- learn more
+- observability
+- trigger workflows on a schedule or from a Queue
+
+If you have any feature requests or notice any bugs, share your feedback directly with the Cloudflare team by joining the [Cloudflare Developers community on Discord](https://discord.cloudflare.com).
