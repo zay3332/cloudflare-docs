@@ -108,19 +108,19 @@ When trying to decide whether to break code up into more than one step, a good r
 For example, each of the below tasks is ideally encapsulated in its own step, so that any failure — such as a file not existing, a third-party API being down or rate limited — does not cause your entire program to fail.
 
 * Reading or writing files from R2
-* Running an AI task using [Workers AI](/workers-ai)
+* Running an AI task using [Workers AI](/workers-ai/)
 * Querying a D1 database or a database via [Hyperdrive](/hyperdrive/)
 * Calling a third-party API
 
 If a subsequent step fails, your Workflow can retry from that step, using any state returned from a previous step. This can also help you avoid unnecessarily querying a database or calling an paid API repeatedly for data you've already fetched.
 
-{{<Aside type="note">}}
+:::note
 
 The term "Durable Execution" is widely used to describe this programming model.
 
 "Durable" describes the ability of the program (application) to implicitly persist state without you having to write to an external store or serialize program state manual
 
-{{</Aside>}}
+:::
 
 Return to the `src/index.ts` file we created in the previous step, and add two calls to `step.do` (or replace the contents of the file with the code below):
 
@@ -210,11 +210,11 @@ With your Workflow deployed, you can now run it.
 2. An instance will run to completion (success or failure)
 3. Deploying newer versions of a Workflow will cause all instances after that point to run the newest Workflow code.
 
-{{<Aside type="note">}}
+:::note
 
 Because Workflows can be long running, it's possible to have running instances that represent different versions of your Workflow code over time.
 
-{{</Aside>}}
+:::
 
 To trigger a Workflow, you can use the `wrangler` CLI and pass in an optional `--payload`. The `payload` will be passed to your Workflow's `run` method handler as an `Event`
 
