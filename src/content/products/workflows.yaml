@@ -1,14 +1,14 @@
-name: Workerflows
+name: Workflows
 
 product:
-  title: Workerflows
-  url: /workerflows/
+  title: Workflows
+  url: /workflows/
   group: Developer platform
   preview_tryout: true
 
 meta:
-  title: Cloudflare Workerflows docs
-  description: Create new serverless SQL databases to query from your Workers and Pages projects.
+  title: Cloudflare Workflows docs
+  description: Build durable, multi-step applications using the Workers platform
   author: '@cloudflare'
 
 resources:
@@ -30,4 +30,4 @@ externals:
 algolia:
   index: developers-cloudflare2
   apikey: 4edb0a6cef3338ff4bcfbc6b3d2db56b
-  product: workerflows
+  product: workflows
