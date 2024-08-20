@@ -126,7 +126,7 @@ The term "Durable Execution" is widely used to describe this programming model.
 
 TODO - explain this
 
-```toml
+```toml title="wrangler.toml"
 ---
 filename: wrangler.toml
 ---
@@ -150,10 +150,7 @@ TODO - explain each field and why they exist, what the naming conventions are, e
 
 Return to the `src/index.ts` file we created in the previous step, and add two calls to `step.do` (or replace the contents of the file with the code below):
 
-```ts
----
-filename: src/index.ts
----
+```ts title="src/index.ts"
 
 import { Workflow } from "cloudflare:workflows"
 
@@ -236,10 +233,7 @@ TODO - how to trigger from code/bindings:
 
 In your `src/index.ts` file...
 
-```ts
----
-filename: src/index.ts
----
+```ts title="src/index.ts"
 interface Env {
     MY_WORKFLOW: Workflow;
 }
