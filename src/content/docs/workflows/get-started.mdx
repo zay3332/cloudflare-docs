@@ -122,6 +122,32 @@ The term "Durable Execution" is widely used to describe this programming model.
 
 :::
 
+## 3. Configure your Workflow
+
+TODO - explain this
+
+```toml
+---
+filename: wrangler.toml
+---
+name = "my-first-workflow"
+main = "src/index.ts"
+compatibility_date = "2024-08-20"
+
+[[workflows]]
+name = "my-first-workflow"
+binding = "MY_WORKFLOW"
+ # script_name is required during for the beta.
+ # Must match the "name" of your Worker at the top of wrangler.toml
+script_name = "my-first-workflow"
+class_name = "MyWorkflow"
+```
+
+TODO - explain each field and why they exist, what the naming conventions are, etc.
+
+
+## 4. Extend your Workflow
+
 Return to the `src/index.ts` file we created in the previous step, and add two calls to `step.do` (or replace the contents of the file with the code below):
 
 ```ts
@@ -146,34 +172,67 @@ export class MyFirstWorkflow extends Workflows {
         })
     }
 }
+
+// Beta requirement: your Workers script must still export a default
+// event handler. In this case, we'll export a fetch() handler.
+export default {
+	async fetch() {
+		return Response.json({ hello: "world" });
+	},
+};
 ```
 
 TODO - talk about StepConfig briefly? How retries work?
 
-## 3. Trigger a Workflow
+## 6. Deploy your Workflow
 
-To trigger a Workflow...
+Deploying a Workflow is identical to deploying a Worker.
+
+```sh
+$ npx wrangler deploy
+```
+
+A Worker with a valid Workflow definition will be automatically registered by Workflows. You can list your current Workflows using wrangler:
+
+```sh
+$ npx wrangler workflows list
+```
+
+TODO - describe the output, Workflows, instances, etc.
+
+
+## 6. Run and observe your Workflow
+
+With your Workflow deployed, you can now run it.
+
+1. A Workflow can run in parallel: each unique invocation of a Workflow is an _instance_ of that Workflow.
+2. An instance will run to completion (success or failure)
+3. Deploying newer versions of a Workflow will cause all instances after that point to run the newest Workflow code.
+
+:::note
+
+Because Workflows can be long running, it's possible to have running instances that represent different versions of your Workflow code over time.
+
+:::
 
 A Workflow can be triggered by any of:
 
 1. External HTTP requests
 2. Messages from a [Queue](/queues/)
 3. A schedule via [Cron Trigger]()
+4. Via the REST API or wrangler
 
-TODO - intro this code
+To trigger our Workflow, we will use the `wrangler` CLI and pass in an optional `--payload`. The `payload` will be passed to your Workflow's `run` method handler as an `Event`
 
-
-```toml
----
-filename: wrangler.toml
----
-
-
-[[workflows]]
-name = "MY_WORKFLOW" # A valid JavaScript variable name
-class = "MyFirstWorkflow" # The name of your Workflow definition
-
+```sh
+$ npx wrangler workflows trigger <your-workflow> --payload='{}'
+# Example output
+# Running Workflow ...
+# Workflow instance created! 
+# Instance ID: 12345-abcdef-98765-fedcba
 ```
+
+TODO - how to trigger from code/bindings:
 
 In your `src/index.ts` file...
 
@@ -193,40 +252,7 @@ export default {
 }
 ```
 
-## 4. Deploy your Workflow
-
-Deploying a Workflow is identical to deploying a Worker. 
-
-```sh
-$ npx wrangler deploy
-```
-
-
-## 5. Run and observe your Workflow
-
-With your Workflow deployed, you can now run it.
-
-1. A Workflow can run in parallel: each unique invocation of a Workflow is an _instance_ of that Workflow.
-2. An instance will run to completion (success or failure)
-3. Deploying newer versions of a Workflow will cause all instances after that point to run the newest Workflow code.
-
-:::note
-
-Because Workflows can be long running, it's possible to have running instances that represent different versions of your Workflow code over time.
-
-:::
-
-To trigger a Workflow, you can use the `wrangler` CLI and pass in an optional `--payload`. The `payload` will be passed to your Workflow's `run` method handler as an `Event`
-
-```sh
-$ npx wrangler workflows run your-workflow --payload='{}'
-# Example output
-# Running Workflow ...
-# Workflow instance created! 
-# Instance ID: 12345-abcdef-98765-fedcba
-```
-
-## 6. (Optional) Clean up
+## 7. (Optional) Clean up
 
 TODO - delete the Workflow.
 
