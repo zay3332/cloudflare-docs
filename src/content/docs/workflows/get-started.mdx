@@ -37,24 +37,32 @@ To continue:
 
 ## 1. Define your Workflow
 
-To create your first Workflow, use the `create cloudflare` (C3) CLI tool and pass it the Workflows starter template:
+To create your first Workflow, use the `create cloudflare` (C3) CLI tool, specifying the Workflows starter template:
 
-<PackageManagers type="create" pkg="cloudflare@latest" args={'my-first-workflow'} />
+```sh
+npx create cloudflare@latest workflows-tutorial -- --template "cloudflare:workflows-tutorial"
+```
 
-<Render file="c3-post-run-steps" product="workers" params={{ one: "Hello World example", two: "Hello World Worker", three: "TypeScript" }} />
+This will create a new folder called `workflows-tutorial`.
 
-This will download the template, with two key files: `src/index.ts` (where your Workflow code will live) and `wrangler.toml` (configuration).
-
-Open the `src/index.ts` file in your text editor. This file contains the following code, which is the most basic instance of a Workflow definition.
+Open the `src/index.ts` file in your text editor. This file contains the following code, which is the most basic instance of a Workflow definition:
 
 ```ts title="src/index.ts"
 // Import the Workflow definition
-import { Workflow } from "cloudflare:workflows"
+import { Workflow, WorkflowEvent, WorkflowStep } from "cloudflare:workflows"
 
 // Create your own class that implements a Workflow
 export class MyFirstWorkflow implements Workflow {
-    async run(step: WorkflowStep) {
-        // One or more steps here.
+    // Define a run() method
+    async run(event: WorkflowEvent, step: WorkflowStep) {
+        // Define one or more steps that optionally return state.
+        let state = step.do("my first step", async () => {
+
+        })
+
+        step.do("my second step", async () => {
+
+        })
     }
 }
 ```
@@ -63,7 +71,7 @@ A Workflow definition:
 
 1. Defines a `run` method that contains the primary logic for your workflow.
 2. Has at least one or more calls to `step.run` that encapsulates the logic of your Workflow.
-3. Can define an optional `onFailure` method that is run when the Workflow fails and exhausts any retry configuration.
+3. Allows steps to return (optional) state, allowing a Workflow to continue execution even if subsequent steps fail, without having to re-run all previous steps.
 
 A single Worker application can contain multiple Workflow definitions, as long as each Workflow has a unique class name. This can be useful for code re-use or to define Workflows are related to each other conceptually.
 
@@ -81,12 +89,20 @@ A `step` is what makes a Workflow powerful, as you can encapsulate errors and pe
 
 At it's most basic, a step looks like this:
 
-```ts
-import { Workflow } from "cloudflare:workflows"
+```ts title="src/index.ts"
+// Import the Workflow definition
+import { Workflow, WorkflowEvent, WorkflowStep } from "cloudflare:workflows"
 
-export class MyFirstWorkflow extends Workflows {
-    async run(event: WorkflowEvents, step: WorkflowStep) {
-        let config = await step.do("fetch config", () => {
+// Create your own class that implements a Workflow
+export class MyFirstWorkflow implements Workflow {
+    // Define a run() method
+    async run(event: WorkflowEvent, step: WorkflowStep) {
+        // Define one or more steps that optionally return state.
+        let state = step.do("my first step", async () => {
+
+        })
+
+        step.do("my second step", async () => {
 
         })
     }
@@ -120,58 +136,58 @@ The term "Durable Execution" is widely used to describe this programming model.
 
 ## 3. Configure your Workflow
 
-TODO - explain this
+Before you can deploy a Workflow, you need to configure it.
+
+Open the `wrangler.toml` file at the root of your `workflows-tutorial` folder:
 
 ```toml title="wrangler.toml"
-name = "my-first-workflow"
+name = "workflows-tutorial"
 main = "src/index.ts"
 compatibility_date = "2024-08-20"
 
 [[workflows]]
+# The name of the Workflow
 name = "my-first-workflow"
+# The binding name, which must be a valid JavaScript variable name.
+# This will be how you call (run) your Workflow from within your code.
 binding = "MY_WORKFLOW"
  # script_name is required during for the beta.
  # Must match the "name" of your Worker at the top of wrangler.toml
 script_name = "my-first-workflow"
-class_name = "MyWorkflow"
+# Must match the class defined in your code that extends the Workflow class
+class_name = "MyFirstWorkflow"
 ```
 
-TODO - explain each field and why they exist, what the naming conventions are, etc.
+## 4. Bind to your Workflow
 
+We have a very basic Workflow definition, but now need to provide a way to call it from within our code. A Workflow can be triggered by:
 
-## 4. Extend your Workflow
+1. External HTTP requests
+2. Messages from a [Queue](/queues/)
+3. A schedule via [Cron Trigger](/workers/configuration/cron-triggers/)
+4. Via the [Workflows REST API]() or [wrangler CLI](/workers/wrangler/commands/#workflows)
 
-Return to the `src/index.ts` file we created in the previous step, and add two calls to `step.do` (or replace the contents of the file with the code below):
+Return to the `src/index.ts` file we created in the previous step and add a `fetch` handler that _binds_ to our Workflow.
 
 ```ts title="src/index.ts"
-import { Workflow, WorkflowStep } from "cloudflare:workflows"
-
-export class MyFirstWorkflow extends Workflows {
-    async run(event: WorkflowEvents, step: WorkflowStep) {
-        // Add this step
-        let config = await step.do("setup", () => {
-
-        })
-
-        await step.sleep("1 minute")
-        
-        // ... and your second step:
-        let fileData = await step.do("read files", () => {
-
-        })
-    }
-}
-
-// Beta requirement: your Workers script must still export a default
-// event handler. In this case, we'll export a fetch() handler.
 export default {
-	async fetch() {
-		return Response.json({ hello: "world" });
+	async fetch(req: Request, env: Env) {
+        let result = env.MY_WORKFLOW.run()
+		return Response.json({ result });
 	},
 };
 ```
 
-TODO - talk about StepConfig briefly? How retries work?
+TODO:
+
+* This is example exposes a HTTP endpoint and runs the Workflow without any parameters
+* In a production application, you might choose to put authentication in front of your endpoint so that only authorized users can run a Workflow
+* Alternatively, you could pass messages to a Workflow [from a Queue consumer](/queues/reference/how-queues-works/#consumers) in order to allow for long-running tasks.
+
+
+```ts
+let result = env.MY_WORKFLOW.run({params: {}})
+```
 
 ## 6. Deploy your Workflow
 
@@ -210,12 +226,7 @@ Because Workflows can be long running, it's possible to have running instances t
 
 :::
 
-A Workflow can be triggered by any of:
 
-1. External HTTP requests
-2. Messages from a [Queue](/queues/)
-3. A schedule via [Cron Trigger]()
-4. Via the REST API or wrangler
 
 To trigger our Workflow, we will use the `wrangler` CLI and pass in an optional `--payload`. The `payload` will be passed to your Workflow's `run` method handler as an `Event`
 

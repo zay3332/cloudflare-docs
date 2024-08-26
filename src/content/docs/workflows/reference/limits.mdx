@@ -8,15 +8,16 @@ sidebar:
 
 import { Render } from "~/components"
 
-| Feature                   | Limit                                                                  |
-| ------------------------- | ---------------------------------------------------------------------- |
-| Workflow class definitions per script | 5 (per script) |
-| Total scripts per account | 500 (shared with Worker script limits) |
-| Compute time per Workflow | "same as Workers" |
-| Maximum state that can be persisted per Workflow run | 1GB |
-| Maximum persisted state per step | 1MB (1e6 bytes) | 
-| Maximum `step.sleep` duration | 365 days (1 year) <beta>beta</beta> |
-| Maximum steps per Workflow | 256 <beta>beta</beta> |
+| Feature                                   | Limit                                                 |
+| ----------------------------------------- | ------------------------------------------------------ |
+| Workflow class definitions per script     | 5 (per script) |
+| Total scripts per account                 | 500 (shared with [Worker script limits](/workers/platform/limits/#account-plan-limits) |
+| Compute time per `step`                   | 60 seconds of [active CPU time](/workers/platform/limits/#cpu-time) |
+| Duration (wall clock) per `step`          | Unlimited - e.g. waiting on network I/O calls |
+| Maximum persisted state per step          | 1MB (1e6 bytes) | 
+| Maximum state that can be persisted per Workflow instance | 1GB |
+| Maximum `step.sleep` duration             | 365 days (1 year) <beta>beta</beta> |
+| Maximum steps per Workflow                | 256 <beta>beta</beta> |
 | Retention limit for completed Workflow state | 30 days <beta>beta</beta> |
 
 <beta>beta</beta> This limit will be reviewed and revised during the open beta for Workflows.
