@@ -140,7 +140,7 @@ The term "Durable Execution" is widely used to describe this programming model.
 
 Before you can deploy a Workflow, you need to configure it.
 
-Open the `wrangler.toml` file at the root of your `workflows-tutorial` folder:
+Open the `wrangler.toml` file at the root of your `workflows-tutorial` folder, which contains the following `[[workflows]]` configuration:
 
 ```toml title="wrangler.toml"
 name = "workflows-tutorial"
@@ -150,8 +150,9 @@ compatibility_date = "2024-08-20"
 [[workflows]]
 # The name of the Workflow
 name = "my-first-workflow"
-# The binding name, which must be a valid JavaScript variable name.
-# This will be how you call (run) your Workflow from within your code.
+# The binding name, which must be a valid JavaScript variable name.  This will
+# be how you call (run) your Workflow from your other Workers handlers or
+# scripts.
 binding = "MY_WORKFLOW"
  # script_name is required during for the beta.
  # Must match the "name" of your Worker at the top of wrangler.toml
@@ -160,14 +161,22 @@ script_name = "my-first-workflow"
 class_name = "MyFirstWorkflow"
 ```
 
+:::note
+
+If you have changed the name of the Workflow in your wrangler commands, the JavaScript class name, 
+
+:::
+
+This configuration tells the Workers platform which JavaScript class represents your Workflow, and sets a `binding` name that allows you to run the Workflow from other handlers or to call into Workflows from other Workers scripts.
+
 ## 4. Bind to your Workflow
 
 We have a very basic Workflow definition, but now need to provide a way to call it from within our code. A Workflow can be triggered by:
 
-1. External HTTP requests
+1. External HTTP requests via a `fetch()` handler
 2. Messages from a [Queue](/queues/)
 3. A schedule via [Cron Trigger](/workers/configuration/cron-triggers/)
-4. Via the [Workflows REST API]() or [wrangler CLI](/workers/wrangler/commands/#workflows)
+4. Via the [Workflows REST API](TODO) or [wrangler CLI](/workers/wrangler/commands/#workflows)
 
 Return to the `src/index.ts` file we created in the previous step and add a `fetch` handler that _binds_ to our Workflow.
 
